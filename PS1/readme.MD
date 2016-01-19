@@ -1,3 +1,5 @@
+# Discriminant Functions
+
 Two R scripts described below.
 
 # genData.R
