@@ -1,3 +1,5 @@
+Two R scripts described below.
+
 # genData.R
 
 Generates a dataset that could be troublesome for discriminant functions and/or linear probability models to correctly identify binary classified data due to the presence of high-leverage outliers.  The dataset is
