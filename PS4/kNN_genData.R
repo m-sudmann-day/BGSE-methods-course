@@ -19,24 +19,6 @@ get_data <- function(slice, seed = 12345){
   return(data)
 }
 
-# Nicholas' function for creating a plot and writing it to a PDF.
-# I modified this function to add contour lines and a title.
-save_pdf <- function(data, title, backgroundPoints)
-{
-  library(ggplot2)
-
-  plot <- ggplot(data = data) +
-    ggtitle(title) +
-    geom_point(aes(x=x1, y=x2, colour=factor(predLabels), shape=factor(y))) +
-    scale_shape_discrete(name="Actual (Shape)") +
-    scale_colour_discrete(name="Prediction (Color)") +
-    #stat_contour(data=backgroundPoints, aes(x=x1, y=x2, z=z),binwidth=1) +
-    geom_point(data=backgroundPoints, aes(x=x1, y=x2, colour=factor(y)), size=1) +
-    theme_bw()
-    ggsave("plot.pdf")
-  plot
-}
-
 # Create the training data.
 trainData <- get_data(0.01, seed=11111)
 
@@ -66,12 +48,28 @@ x2range <- seq(from = x2min - slice, to = x2max + slice, by = slice)
 x1length <- length(x1range)
 x2length <- length(x2range)
 backgroundPoints <- data.frame(x1=rep(x1range, x2length), x2=rep(x2range, x1length))
-backgroundPoints$y <- kNN(trainData[,1:2], trainData$y, 3, 2, backgroundPoints)
-dim(backgroundPoints)
+backgroundPoints$y <- as.character(kNN(trainData[,1:2], trainData$y, 3, 2, backgroundPoints)$predLabels)
+head(predictData)
+
+# Nicholas' function for creating a plot and writing it to a PDF.
+# I modified this function to add contour lines and a title.
+save_pdf <- function(data, backgroundPoints, title)
+{
+  library(ggplot2)
+  
+  plot <- ggplot(data = data) +
+    ggtitle(title) +
+    geom_point(aes(x=x1, y=x2, colour=factor(predLabels), shape=factor(y))) +
+    #geom_contour(data=backgroundPoints, aes(x=x1, y=x2, z=factor(y)), bins=2) +
+    scale_shape_discrete(name="Actual (Shape)") +
+    scale_colour_discrete(name="Prediction (Color)") +
+    theme_bw()
+  ggsave("plot.pdf")
+  plot
+}
 
 # Save a PDF with a plot containing prediction data and contours of predictions.
 save_pdf(predictData,
          backgroundPoints,
          paste("Predicted Labels with Contours (correctness = ", correctness, "%)", sep=""))
-
 
