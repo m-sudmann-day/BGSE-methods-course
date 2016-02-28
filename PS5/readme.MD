@@ -6,7 +6,7 @@ Implements a classification tree that supports a variety of cost functions: cros
 
 Defines functions for training a classification tree, and for using that tree to generate predictions.
 
-### Public functions:
+#### Public functions:
 	cTree()
 	cTreePredict()
 	cTreeShow()
@@ -17,7 +17,7 @@ Defines a method for testing the classification tree against the 'party' library
 
 When run directly, the script defines the above function, loads the 'spam' dataset, runs the function, and generates the results in a PDF.
 
-### Packages required:
+#### Packages required:
 	formula.tools
 	caTools
 	party
