@@ -22,9 +22,12 @@ When run directly, the script defines the above function, loads the 'spam' datas
 
 #### Public functions:
 	cTreeTest()
+	cTreeTestPlot()
 
 #### Packages required:
 	formula.tools
 	caTools
 	party
-  ggplot2
+	ggplot2
+
+The test takes a while to run.  Therefore, the output of a previous test is included in the file cTree.pdf.  This shows that both test and training performance improve, and then level off, as tree depth is allowed to increase.  There is a large difference between test and training errors, probably related to overfitting.  Overfitting probably occurs because, for the test, the minimum number of points per region was set to 5, a relatively low number for this purpose.

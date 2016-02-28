@@ -10,14 +10,12 @@
 #
 # Uses R packages:
 #   formula.tools
-#   party (for comparison purposes only)
 #
-# Public functions: cTree(), cTreePredict(), cTreeTest()
+# Public functions: cTree(), cTreePredict(), cTreeShow()
 #############################################################################
 
 # Activate this code if you do not have the prerequisite libraries.
 #install.packages("formula.tools")
-#install.packages("party")
 
 #############################################################################
 # A private enumeration of cost functions.
