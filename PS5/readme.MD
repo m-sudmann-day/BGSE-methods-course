@@ -2,6 +2,8 @@
 
 Implements a classification tree that supports a variety of cost functions: cross-entropy, misclassification error, and Gini index.
 
+For more detail, please see the comments in the R scripts.
+
 ## cTree.R
 
 Defines functions for training a classification tree, and for using that tree to generate predictions.
