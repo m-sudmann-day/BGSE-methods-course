@@ -1,49 +1,47 @@
 
 #############################################################################
-# cTree.R
+# adaBoost.R
 #
 # Matthew Sudmann-Day
 # Barcelona GSE Data Science
 #
-# Implements a classification tree that supports a variety of cost functions:
-# cross-entropy, misclassification error, and Gini index.
+# Implements an AdaBoost.M1 boosting algorithm to boost the weak classifier
+# rpart.  Provides a 
 #
 # Uses R packages:
-#   formula.tools
+#   assertthat, rpart
 #
-# Public functions: cTree(), cTreePredict(), cTreeShow()
-#############################################################################
-
-# Activate this code if you do not have the prerequisite libraries.
-#install.packages("formula.tools")
-
-#############################################################################
-# A private enumeration of cost functions.
-
-#############################################################################
-# Public function cTree() builds a classification tree based on the formula,
-# data, and hyperparameters passed by the caller.
+# Public function adaBoost() uses an AdaBoost.M1 boosting algorithm to boost
+# the weak classifier rpart.
 #
 # Parameters:
 #   formula: an R-style formula to describe the label and the independent
 #     columns in the data
 #   data: a data frame containing the training data
-#   depth: the maximum depth of split nodes in the tree, excludes leaf nodes
-#   minPoints: the minimum number of training observations permitted in a
-#     single classification region
-#   costFnc: the cost function to measure the fragmentation of the labels
-#     (permitted values are "Entropy" (default), "ME", and "Gini")
-#
-# Calls cTreeAux() to perform the recursive portion of the algorithm.
+#   depth: the maximum depth of the classification true for rpart to create
+#   noTrees: the number of rpart models to create, ie, the number of boosting
+#     iterations
+#   test: a data frame containing the test data.  If not provided, the
+#     training data will also be used as the test data.
 #
 # Returns:
-#   a classification tree, consisting of a recursive structure of lists
-#   that describe the split and leaf nodes of the tree
-
-adaBoost <- function(formula, data, depth, noTrees, test=NULL)
+#   a list with one element:
+#     predLabels: predicted labels
+#############################################################################
+adaBoost <- function(formula, data, depth, noTrees, test=data)
 {
-  require(assertthat)
-  require(rpart)
+  if (!require('assertthat')) install.packages('assertthat')
+  library(assertthat)
+  if (!require('rpart')) install.packages('rpart')
+  library(rpart)
+
+
+  # Basic assertions that the parameters are valid.
+  assert_that(class(formula) == "formula")
+  assert_that(class(data) == "data.frame" && nrow(data) > 0 && ncol(data) > 1)
+  assert_that(is.numeric(depth) && depth > 1)
+  assert_that(is.numeric(noTrees) && noTrees > 0)
+  assert_that(class(test) == "data.frame" && nrow(test) > 0 && ncol(test) > 1)
   
   # Generate a model frame object to sort out the environment of the formula and
   # to allow us to add a weights column to the data without changing the meaning
@@ -57,7 +55,7 @@ adaBoost <- function(formula, data, depth, noTrees, test=NULL)
   # Get a vector of unique labels.  Assert that it be of length 2.
   uniqueLabels <- unique(levels(factor(labels)))
   assert_that(length(uniqueLabels) == 2)
-
+  
   # Initialize the weights, alpha (our model "scores"), and G (our list of models).
   N <- nrow(data)
   w <- rep(1/N, N)
@@ -78,7 +76,6 @@ adaBoost <- function(formula, data, depth, noTrees, test=NULL)
     preds <- predict(G[[m]], newdata=mf, type="class")
     preds <- as.numeric(levels(preds)[preds])
     
-cat(paste(mean(preds==labels), "\n"))
     # Generate a vector of misclassifications.
     misclass <- ifelse(preds != labels, 1, 0)
 
@@ -87,11 +84,6 @@ cat(paste(mean(preds==labels), "\n"))
     err <- sum(w * misclass)/sum(w)
     alpha[m] <- log((1-err)/err)
     w <- w * exp(alpha[m] * misclass)
-  }
-
-  if (is.null(test))
-  {
-    test <- data
   }
 
   # Initialize a vector of meta predictions.
@@ -117,27 +109,64 @@ cat(paste(mean(preds==labels), "\n"))
   return(list(predLabels=metaPreds))
 }
 
-data <- read.csv("../PS5/Spam/spambase.data")
-formula <- factor(spam) ~ .#word_freq_make+word_freq_address+word_freq_all+word_freq_3d+word_freq_over
-preds <- adaBoost(formula, data, 30, 10)
-mean(as.numeric(preds$predLabels)==data$spam)
+adaBoost_spam <- function(formula, data, depth, maxTrees, trainRatio)
+{
+  require(assertthat)
+  require(caTools)
+  require(rpart)
+  require(gbm)
+  require(ggplot2)
+  
+  data <- read.csv("Spam/spambase.data")
 
-require(caTools)
-data <- read.csv("../PS5/Spam/spambase.data")
-spl <- sample.split(0.5)
-train <- data[spl,]
-test <- data[!spl,]
-preds <- adaBoost(factor(spam) ~ ., train, 30, 10, test)
-mean(as.numeric(preds$predLabels)==test$spam)
+  # Basic assertions that the parameters are valid.
+  assert_that(class(formula) == "formula")
+  assert_that(class(data) == "data.frame" && nrow(data) > 0 && ncol(data) > 1)
+  assert_that(is.numeric(depth) && depth > 1)
+  assert_that(is.numeric(maxTrees) && maxTrees > 0)
+  assert_that(is.numeric(trainRatio) && trainRatio > 0 && trainRatio < 1)
+  
+  # Generate a model frame object to sort out the environment of the formula and
+  # to allow us to add a weights column to the data without changing the meaning
+  # of the formula in case the formula contains a '.' for all other variables.
+  mf <- model.frame(formula, data)
+  labels <- mf[,1]
+  
+  spl <- sample.split(data, trainRatio)
+  trainData <- data[spl,]
+  trainLabels <- labels[spl]
+  testData <- data[!spl,]
+  testLabels <- labels[!spl]
+  
+  results <- NULL
 
-require(caTools)
-data <- read.csv("../PS5/Spam/spambase.data")
-spl <- sample.split(data, 0.5)
-train <- data[spl,]
-test <- data[!spl,]
-formula=factor(spam) ~ .
-data=train
-depth=30
-noTrees=10
-nrow(test)
-nrow(train)
+  for (noTrees in 1:maxTrees)
+  {
+    cat(paste("  noTrees=", noTrees, "\n", sep=""))
+    preds <- adaBoost(formula, trainData, depth, noTrees)
+    errors <- mean(preds$predLabels != trainLabels)
+    results <- rbind(results, data.frame(noTrees=noTrees, errors=errors, Error_Type="Adaboost Train"))
+
+    preds <- adaBoost(formula, trainData, depth, noTrees, testData)
+    errors <- mean(preds$predLabels != testLabels)
+    results <- rbind(results, data.frame(noTrees=noTrees, errors=errors, Error_Type="Adaboost Test"))
+    
+    mdl <- gbm(formula=formula, distribution="adaboost", data=trainData, n.trees=noTrees,
+               interaction.depth=depth, shrinkage=1, bag.fraction=1)
+    preds <- predict(mdl, newdata=trainData, n.trees=noTrees)
+    errors <- mean(ifelse(preds > 0, 1, 0) != trainLabels)
+    results <- rbind(results, data.frame(noTrees=noTrees, errors=errors, Error_Type="GBM Train"))
+    
+    mdl <- gbm(formula=formula, distribution="adaboost", data=trainData, n.trees=noTrees,
+               interaction.depth=depth, shrinkage=1, bag.fraction=1)
+    preds <- predict(mdl, newdata=testData, n.trees=noTrees)
+    errors <- mean(ifelse(preds > 0, 1, 0) != testLabels)
+    results <- rbind(results, data.frame(noTrees=noTrees, errors=errors, Error_Type="GBM Test"))
+  }
+
+  plot <- ggplot(results, aes(x=noTrees, y=errors)) + geom_line(aes(color=type))
+  ggsave("adaBoost.pdf", plot)
+  ggsave("adaBoost.png", plot)
+  
+  return(plot)
+}
