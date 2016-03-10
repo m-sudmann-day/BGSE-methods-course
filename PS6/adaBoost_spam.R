@@ -11,7 +11,7 @@
 # Uses R packages:
 #   assertthat, rpart, gbm, caTools, ggplot2
 #
-# Public function adaBoost_spam() implements the test and outputs a plot
+# Public function adaBoost_spam() executes the test and outputs a plot
 #   that compares training and test errors for AdaBoost.M1 and GBM.  The plot
 #   is returned directly, and is also written to PDF and PNG files.
 #
@@ -103,4 +103,4 @@ adaBoost_spam <- function(formula, data, depth, maxTrees, trainRatio)
 
 
 data <- read.csv("Spam/spambase.data")
-adaBoost_spam(spam ~ ., data, 5, 20, 0.7)
+adaBoost_spam(spam ~ ., data, 5, 50, 0.7)
