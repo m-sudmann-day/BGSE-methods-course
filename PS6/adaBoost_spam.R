@@ -27,7 +27,6 @@
 # Returns:
 #   a plot of training and test errors for AdaBoost.M1 and GBM
 #############################################################################
-
 adaBoost_spam <- function(formula, data, depth, maxTrees, trainRatio)
 {
   if (!require('assertthat')) install.packages('assertthat')
@@ -101,6 +100,6 @@ adaBoost_spam <- function(formula, data, depth, maxTrees, trainRatio)
   return(plot)
 }
 
-
+# Load the spam data set and initiate the test.
 data <- read.csv("Spam/spambase.data")
-adaBoost_spam(spam ~ ., data, 5, 50, 0.7)
+adaBoost_spam(spam ~ ., data, 8, 60, 0.7)
