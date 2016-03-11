@@ -27,6 +27,6 @@ Compares the AdaBoost.M1 implementation against 'gbm'.
 	caTools
 
 When run directly this R script will execute the adaBoost_spam() function which will create a PDF
-and a PNG containing its test results.  A relatively low depth of 5 is permitted for the classification
+and a PNG containing its test results.  A relatively low depth of 8 is permitted for the classification
 trees in order to force the predictors to struggle.  With adequate depth, the performance of both predictors is
 excellent and therefore less good for comparison.
